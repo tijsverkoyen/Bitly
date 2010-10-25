@@ -7,6 +7,9 @@
  * The class is documented in the file itself. If you find any bugs help me out and report them. Reporting can be done by sending an email to php-bitly-bugs[at]verkoyen[dot]eu.
  * If you report a bug, make sure you give me enough information (include your code).
  *
+ * Changelog since 1.0.2
+ * - now using version 3 of the bit.ly API.
+ *
  * Changelog since 1.0.1
  * - each URL will be added into your history, removed the history parameter
  *
@@ -26,7 +29,7 @@
  * This software is provided by the author "as is" and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the author be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this software, even if advised of the possibility of such damage.
  *
  * @author			Tijs Verkoyen <php-bitly@verkoyen.eu>
- * @version			1.0.1
+ * @version			2.0.0
  *
  * @copyright		Copyright (c) 2008, Tijs Verkoyen. All rights reserved.
  * @license			BSD License
@@ -37,16 +40,16 @@ class Bitly
 	const DEBUG = false;
 
 	// url for the bitly-api
-	const API_URL = 'http://api.bit.ly';
+	const API_URL = 'http://api.bit.ly/v3';
 
 	// port for the bitly-API
 	const API_PORT = 80;
 
 	// bitly-API version
-	const API_VERSION = '2.0.1';
+	const API_VERSION = '3.0';
 
 	// current version
-	const VERSION = '1.0.2';
+	const VERSION = '2.0.0';
 
 
 	/**
@@ -110,9 +113,9 @@ class Bitly
 		$aParameters = (array) $aParameters;
 
 		// add required parameters
+		$aParameters['format'] = 'json';
 		$aParameters['login'] = $this->getLogin();
 		$aParameters['apiKey'] = $this->getApiKey();
-		$aParameters['version'] = self::API_VERSION;
 
 		// init var
 		$queryString = '';
@@ -190,10 +193,10 @@ class Bitly
 		if($json === false) throw new BitlyException('Invalid JSON-response');
 
 		// is error?
-		if(!isset($json['statusCode']) || (string) $json['statusCode'] != 'OK')
+		if(!isset($json['status_txt']) || (string) $json['status_txt'] != 'OK')
 		{
 			// bitly-error?
-			if(isset($json['errorCode']) && isset($json['errorMessage'])) throw new BitlyException((string) $json['errorMessage'], (int) $json['errorCode']);
+			if(isset($json['status_code']) && isset($json['status_txt'])) throw new BitlyException((string) $json['status_txt'], (int) $json['status_code']);
 
 			// invalid json?
 			else throw new BitlyException('Invalid JSON-response');
@@ -301,89 +304,85 @@ class Bitly
 
 // url methods
 	/**
-	 * Get a list of bit.ly API error codes.
+	 * Grab the statistics about a link
 	 *
 	 * @return	array
+	 * @param	string[optional] $shortURL	refers to a bit.ly URL eg: http://bit.ly/1RmnUT
+	 * @param	string[optional] $hash		refers to a bit.ly hash eg: 1RmnUT
 	 */
-	public function errors()
+	public function clicks($shortURL = null, $hash = null)
 	{
-		// make the call
-		$response = $this->doCall('errors', null);
+		// redefine
+		$shortURL = (string) $shortURL;
+		$hash = (string) $hash;
 
 		// validate
-		if(isset($response['results'])) return (array) $response['results'];
+		if($shortURL == '' && $hash == '') throw new BitlyException('shortURL or hash should contain a value');
 
-		// fallbak
+		// make the call
+		if($shortURL !== '') $parameters['shortUrl'] = $shortURL;
+		if($hash !== '') $parameters['hash'] = $hash;
+
+		// make the call
+		$response = $this->doCall('clicks', $parameters);
+
+		// validate
+		if(isset($response['data']['clicks'][0]))
+		{
+			// init var
+			$return = array();
+
+			$return['url'] = $response['data']['clicks'][0]['short_url'];
+			$return['hash'] = $response['data']['clicks'][0]['user_hash'];
+			$return['clicks'] = (int) $response['data']['clicks'][0]['user_clicks'];
+			$return['global_hash'] = $response['data']['clicks'][0]['global_hash'];
+			$return['global_clicks'] = (int) $response['data']['clicks'][0]['global_clicks'];
+
+			// return
+			return $return;
+		}
+
+		// fallback
 		return false;
 	}
 
-
 	/**
-	 * Given a bit.ly url or hash return long source url
+	 * Given a bit.ly URL or hash, expand decodes it and returns back the target URL.
 	 *
-	 * @return	string
-	 * @param	string $shortUrlOrHash	A bit.ly-url (eg: http://bit.ly/1RmnUT) or hash (eg: 1RmnUT)
+	 * @return	array
+	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT
+	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT
 	 */
-	public function expand($shortUrlOrHash)
+	public function expand($shortURL = null, $hash = null)
 	{
-		// calculate hash
-		$hash = str_replace('http://bit.ly/', '', (string) $shortUrlOrHash);
+		// redefine
+		$shortURL = (string) $shortURL;
+		$hash = (string) $hash;
+
+		// validate
+		if($shortURL == '' && $hash == '') throw new BitlyException('shortURL or hash should contain a value');
 
 		// make the call
-		$parameters['hash'] = $hash;
+		if($shortURL !== '') $parameters['shortUrl'] = $shortURL;
+		if($hash !== '') $parameters['hash'] = $hash;
 
 		// make the call
 		$response = $this->doCall('expand', $parameters);
 
 		// validate
-		if(isset($response['results'][$hash]['longUrl'])) return (string) $response['results'][$hash]['longUrl'];
+		if(isset($response['data']['expand'][0]))
+		{
+			// init var
+			$return = array();
 
-		// fallbak
-		return false;
-	}
+			$return['url'] = $response['data']['expand'][0]['short_url'];
+			$return['long_url'] = $response['data']['expand'][0]['long_url'];
+			$return['hash'] = $response['data']['expand'][0]['user_hash'];
+			$return['global_hash'] = $response['data']['expand'][0]['global_hash'];
 
-
-	/**
-	 * Given a bit.ly url or hash, return information about that page, such as the long source url, ...
-	 *
-	 * @return	array
-	 * @param	string $shortUrlOrHash	A bit.ly-url (eg: http://bit.ly/1RmnUT) or hash (eg: 1RmnUT)
-	 */
-	public function info($shortUrlOrHash)
-	{
-		// calculate hash
-		$hash = str_replace('http://bit.ly/', '', (string) $shortUrlOrHash);
-
-		// make the call
-		$parameters['hash'] = $hash;
-
-		// make the call
-		$response = $this->doCall('info', $parameters);
-
-		// validate
-		if(isset($response['results'][$hash])) return (array) $response['results'][$hash];
-
-		// fallbak
-		return false;
-	}
-
-
-	/**
-	 * Given a long url, returns a shorter one.
-	 *
-	 * @return	string
-	 * @param	string $url	    A long URL to shorten, eg: http://betaworks.com
-	 */
-	public function shorten($url)
-	{
-		// redefine
-		$parameters['longUrl'] = (string) $url;
-
-		// make the call
-		$response = $this->doCall('shorten', $parameters);
-
-		// validate
-		if(isset($response['results'][$url]['shortUrl'])) return (string) $response['results'][$url]['shortUrl'];
+			// return
+			return $return;
+		}
 
 		// fallback
 		return false;
@@ -391,26 +390,96 @@ class Bitly
 
 
 	/**
-	 * Given a bit.ly url or hash, return traffic and referrer data.
+	 * For a long URL, shorten encodes a URL and returns a short one.
 	 *
 	 * @return	array
-	 * @param	string $shortUrlOrHash	A bit.ly-url (eg: http://bit.ly/1RmnUT) or hash (eg: 1RmnUT)
+	 * @param	string $url	    					A long URL to shorten, eg: http://betaworks.com
+	 * @param	string[optional] $domain			Refers to a preferred domain, possible values are: bit.ly or j.mp.
+	 * @param	string[optional] $endUserLogin		The end users login.
+	 * @param	string[optional] $endUserApiKey		The end users apiKey.
 	 */
-	public function stats($shortUrlOrHash)
+	public function shorten($url, $domain = null, $endUserLogin = null, $endUserApiKey = null)
 	{
-		// calculate hash
-		$hash = str_replace('http://bit.ly/', '', (string) $shortUrlOrHash);
+		// domain specified
+		if($domain !== null && !in_array((string) $domain, array('bit.ly', 'j.mp'))) throw new BitlyException('Invalid domain, only bit.ly or j.mp are allowed, custom domains will be handled by using the correct login.');
+
+		// redefine
+		$parameters['longUrl'] = (string) $url;
+		if($domain !== null) $parameters['domain'] = (string) $domain;
+		if($endUserLogin !== null) $parameters['x_login'] = (string) $endUserLogin;
+		if($endUserApiKey !== null) $parameters['x_apiKey'] = (string) $endUserApiKey;
 
 		// make the call
-		$parameters['hash'] = $hash;
-
-		// make the call
-		$response = $this->doCall('stats', $parameters);
+		$response = $this->doCall('shorten', $parameters);
 
 		// validate
-		if(isset($response['results'])) return (array) $response['results'];
+		if(isset($response['data']))
+		{
+			// init var
+			$result = array();
+			$result['url'] = $response['data']['url'];
+			$result['long_url'] = $response['data']['long_url'];
+			$result['hash'] = $response['data']['hash'];
+			$result['global_hash'] = $response['data']['global_hash'];
+			$result['is_new_hash'] = ($response['data']['new_hash'] == 1);
 
-		// fallbak
+			return $result;
+		}
+
+		// fallback
+		return false;
+	}
+
+
+// user methods
+	/**
+	 * For any given a bit.ly user login and apiKey, you can validate that the pair is active.
+	 *
+	 * @return	bool
+	 * @param	string $endUserLogin	The end users login.
+	 * @param	string $endUserApiKey	The end users apiKey.
+	 */
+	public function validate($endUserLogin, $endUserApiKey)
+	{
+		// redefine
+		$parameters['x_login'] = (string) $endUserLogin;
+		$parameters['x_apiKey'] = (string) $endUserApiKey;
+
+		// make the call
+		$response = $this->doCall('validate', $parameters);
+
+		// validate
+		if(isset($response['data']['valid']))
+		{
+			return ($response['data']['valid'] == 1);
+		}
+
+		// fallback
+		return false;
+	}
+
+
+	/**
+	 * This is used to query whether a given short domain is assigned for bitly.Pro, and is consequently a valid shortUrl parameter for other api calls.
+	 *
+	 * @return	bool
+	 * @param	string $domain	A short domain.
+	 */
+	public function isProDomain($domain)
+	{
+		// redefine
+		$parameters['domain'] = (string) $domain;
+
+		// make the call
+		$response = $this->doCall('bitly_pro_domain', $parameters);
+
+		// validate
+		if(isset($response['data']['bitly_pro_domain']))
+		{
+			return ($response['data']['bitly_pro_domain'] == 1);
+		}
+
+		// fallback
 		return false;
 	}
 }
