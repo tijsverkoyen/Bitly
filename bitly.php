@@ -7,6 +7,10 @@
  * The class is documented in the file itself. If you find any bugs help me out and report them. Reporting can be done by sending an email to php-bitly-bugs[at]verkoyen[dot]eu.
  * If you report a bug, make sure you give me enough information (include your code).
  *
+ * Changelog since 1.0.0
+ * - corrected some documentation
+ * - wrote some explanation for the method-parameters
+ *
  * License
  * Copyright (c) 2009, Tijs Verkoyen. All rights reserved.
  *
@@ -19,7 +23,7 @@
  * This software is provided by the author "as is" and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the author be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this software, even if advised of the possibility of such damage.
  *
  * @author			Tijs Verkoyen <php-bitly@verkoyen.eu>
- * @version			1.0.0
+ * @version			1.0.1
  *
  * @copyright		Copyright (c) 2008, Tijs Verkoyen. All rights reserved.
  * @license			BSD License
@@ -39,11 +43,11 @@ class Bitly
 	const API_VERSION = '2.0.1';
 
 	// current version
-	const VERSION = '1.0.0';
+	const VERSION = '1.0.1';
 
 
 	/**
-	 * The API-key
+	 * The API-key that will be used for authenticating
 	 *
 	 * @var	string
 	 */
@@ -51,7 +55,7 @@ class Bitly
 
 
 	/**
-	 * The login
+	 * The login that will be used for authenticating
 	 *
 	 * @var	string
 	 */
@@ -79,8 +83,8 @@ class Bitly
 	 * Default constructor
 	 *
 	 * @return	void
-	 * @param	string $login
-	 * @param	string $apiKey
+	 * @param	string $login	The login (username) that has to be used for authenticating
+	 * @param	string $apiKey	The API-key that has to be used for authentication (see http://bit.ly/account)
 	 */
 	public function __construct($login, $apiKey)
 	{
@@ -94,8 +98,7 @@ class Bitly
 	 *
 	 * @return	string
 	 * @param	string $url
-	 * @param	array[optiona] $aParameters
-	 * @param	bool[optional] $authenticate
+	 * @param	array[optional] $aParameters
 	 */
 	private function doCall($url, $aParameters = array())
 	{
@@ -177,16 +180,19 @@ class Bitly
 		// error?
 		if($errorNumber != '') throw new BitlyException($errorMessage, $errorNumber);
 
-		// we expect XML so load it
+		// we expect JSON so decode it
 		$json = @json_decode($response, true);
 
-		// validate xml
+		// validate json
 		if($json === false) throw new BitlyException('Invalid JSON-response');
 
-		// error
+		// is error?
 		if(!isset($json['statusCode']) || (string) $json['statusCode'] != 'OK')
 		{
+			// bitly-error?
 			if(isset($json['errorCode']) && isset($json['errorMessage'])) throw new BitlyException((string) $json['errorMessage'], (int) $json['errorCode']);
+
+			// invalid json?
 			else throw new BitlyException('Invalid JSON-response');
 		}
 
@@ -200,7 +206,7 @@ class Bitly
 	 *
 	 * @return	string
 	 */
-	public function getApiKey()
+	private function getApiKey()
 	{
 		return (string) $this->apiKey;
 	}
@@ -211,14 +217,14 @@ class Bitly
 	 *
 	 * @return	string
 	 */
-	public function getLogin()
+	private function getLogin()
 	{
 		return (string) $this->login;
 	}
 
 
 	/**
-	 * Get the timeout
+	 * Get the timeout that will be used
 	 *
 	 * @return	int
 	 */
@@ -229,7 +235,8 @@ class Bitly
 
 
 	/**
-	 * Get the useragent
+	 * Get the useragent that will be used. Our version will be prepended to yours.
+	 * It will look like: "PHP Akismet/<version> <your-user-agent>"
 	 *
 	 * @return	string
 	 */
@@ -240,24 +247,24 @@ class Bitly
 
 
 	/**
-	 * Set the API-key
+	 * Set the API-key that has to be used
 	 *
 	 * @return	void
 	 * @param	string $apiKey
 	 */
-	public function setApiKey($apiKey)
+	private function setApiKey($apiKey)
 	{
 		$this->apiKey = (string) $apiKey;
 	}
 
 
 	/**
-	 * Set the login
+	 * Set the login that has to be used
 	 *
 	 * @return	void
 	 * @param	string $login
 	 */
-	public function setLogin($login)
+	private function setLogin($login)
 	{
 		$this->login = (string) $login;
 	}
@@ -265,9 +272,10 @@ class Bitly
 
 	/**
 	 * Set the timeout
+	 * After this time the request will stop. You should handle any errors triggered by this.
 	 *
 	 * @return	void
-	 * @param	int $seconds
+	 * @param	int $seconds	The timeout in seconds
 	 */
 	public function setTimeOut($seconds)
 	{
@@ -277,10 +285,10 @@ class Bitly
 
 	/**
 	 * Set the user-agent for you application
-	 * It will be appended to ours
+	 * It will be appended to ours, the result will look like: "PHP Akismet/<version> <your-user-agent>"
 	 *
 	 * @return	void
-	 * @param	string $userAgent
+	 * @param	string $userAgent	Your user-agent, it should look like <app-name>/<app-version>
 	 */
 	public function setUserAgent($userAgent)
 	{
@@ -289,7 +297,6 @@ class Bitly
 
 
 // url methods
-
 	/**
 	 * Get a list of bit.ly API error codes.
 	 *
@@ -312,7 +319,7 @@ class Bitly
 	 * Given a bit.ly url or hash return long source url
 	 *
 	 * @return	string
-	 * @param	string $shortUrlOrHash
+	 * @param	string $shortUrlOrHash	A bit.ly-url (eg: http://bit.ly/1RmnUT) or hash (eg: 1RmnUT)
 	 */
 	public function expand($shortUrlOrHash)
 	{
@@ -337,7 +344,7 @@ class Bitly
 	 * Given a bit.ly url or hash, return information about that page, such as the long source url, ...
 	 *
 	 * @return	array
-	 * @param	string $shortUrlOrHash
+	 * @param	string $shortUrlOrHash	A bit.ly-url (eg: http://bit.ly/1RmnUT) or hash (eg: 1RmnUT)
 	 */
 	public function info($shortUrlOrHash)
 	{
@@ -362,8 +369,8 @@ class Bitly
 	 * Given a long url, returns a shorter one.
 	 *
 	 * @return	string
-	 * @param	string $url
-	 * @param	bool[optional] $publishToHistory
+	 * @param	string $url	    A long URL to shorten, eg: http://betaworks.com
+	 * @param	bool[optional] $publishToHistory	Should this url be published into your history? Default is true
 	 */
 	public function shorten($url, $publishToHistory = true)
 	{
@@ -386,7 +393,7 @@ class Bitly
 	 * Given a bit.ly url or hash, return traffic and referrer data.
 	 *
 	 * @return	array
-	 * @param	string $shortUrlOrHash
+	 * @param	string $shortUrlOrHash	A bit.ly-url (eg: http://bit.ly/1RmnUT) or hash (eg: 1RmnUT)
 	 */
 	public function stats($shortUrlOrHash)
 	{
