@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bitly class
  *
@@ -6,6 +7,14 @@
  *
  * The class is documented in the file itself. If you find any bugs help me out and report them. Reporting can be done by sending an email to php-bitly-bugs[at]verkoyen[dot]eu.
  * If you report a bug, make sure you give me enough information (include your code).
+ *
+ * Changelog since 2.0.1
+ * - added some new method to reflect the latest version of the API, new methods are:
+ * 		- clicksByMinute
+ * 		- countries
+ * 		- info
+ * 		- lookup
+ * 		- referrers
  *
  * Changelog since 1.0.2
  * - now using version 3 of the bit.ly API.
@@ -18,7 +27,7 @@
  * - wrote some explanation for the method-parameters
  *
  * License
- * Copyright (c) 2009, Tijs Verkoyen. All rights reserved.
+ * Copyright (c) 2010, Tijs Verkoyen. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
  *
@@ -29,9 +38,9 @@
  * This software is provided by the author "as is" and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the author be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this software, even if advised of the possibility of such damage.
  *
  * @author			Tijs Verkoyen <php-bitly@verkoyen.eu>
- * @version			2.0.0
+ * @version			2.0.1
  *
- * @copyright		Copyright (c) 2008, Tijs Verkoyen. All rights reserved.
+ * @copyright		Copyright (c) 2010, Tijs Verkoyen. All rights reserved.
  * @license			BSD License
  */
 class Bitly
@@ -49,7 +58,7 @@ class Bitly
 	const API_VERSION = '3.0';
 
 	// current version
-	const VERSION = '2.0.0';
+	const VERSION = '2.0.1';
 
 
 	/**
@@ -346,6 +355,93 @@ class Bitly
 		return false;
 	}
 
+
+	/**
+	 * Given a bit.ly URL or hash, provides time series clicks per minute for the last hour in reverse chronological order (most recent to least recent).
+	 *
+	 * @return	array
+	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT
+	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT
+	 */
+	public function clicksByMinute($shortURL = null, $hash = null)
+	{
+		// redefine
+		$shortURL = (string) $shortURL;
+		$hash = (string) $hash;
+
+		// validate
+		if($shortURL == '' && $hash == '') throw new BitlyException('shortURL or hash should contain a value');
+
+		// make the call
+		if($shortURL !== '') $parameters['shortUrl'] = $shortURL;
+		if($hash !== '') $parameters['hash'] = $hash;
+
+		// make the call
+		$response = $this->doCall('clicks_by_minute', $parameters);
+
+		// validate
+		if(isset($response['data']['clicks_by_minute'][0]))
+		{
+			// init var
+			$return = array();
+
+			$return['url'] = $response['data']['clicks_by_minute'][0]['short_url'];
+			$return['hash'] = $response['data']['clicks_by_minute'][0]['user_hash'];
+			$return['global_hash'] = $response['data']['clicks_by_minute'][0]['global_hash'];
+			$return['clicks'] = (array) $response['data']['clicks_by_minute'][0]['clicks'];
+
+			// return
+			return $return;
+		}
+
+		// fallback
+		return false;
+	}
+
+
+	/**
+	 * Provides a list of countries from which clicks on a specified bit.ly short link have originated, and the number of clicks per country.
+	 *
+	 * @return	array
+	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT
+	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT
+	 */
+	public function countries($shortURL = null, $hash = null)
+	{
+		// redefine
+		$shortURL = (string) $shortURL;
+		$hash = (string) $hash;
+
+		// validate
+		if($shortURL == '' && $hash == '') throw new BitlyException('shortURL or hash should contain a value');
+
+		// make the call
+		if($shortURL !== '') $parameters['shortUrl'] = $shortURL;
+		if($hash !== '') $parameters['hash'] = $hash;
+
+		// make the call
+		$response = $this->doCall('countries', $parameters);
+
+		// validate
+		if(isset($response['data']['countries']))
+		{
+			// init var
+			$return = array();
+
+			$return['url'] = $response['data']['short_url'];
+			$return['hash'] = $response['data']['user_hash'];
+			$return['global_hash'] = $response['data']['global_hash'];
+			$return['countries'] = (array) $response['data']['countries'];
+
+			// return
+			return $return;
+		}
+
+		// fallback
+		return false;
+	}
+
+
 	/**
 	 * Given a bit.ly URL or hash, expand decodes it and returns back the target URL.
 	 *
@@ -379,6 +475,130 @@ class Bitly
 			$return['long_url'] = $response['data']['expand'][0]['long_url'];
 			$return['hash'] = $response['data']['expand'][0]['user_hash'];
 			$return['global_hash'] = $response['data']['expand'][0]['global_hash'];
+
+			// return
+			return $return;
+		}
+
+		// fallback
+		return false;
+	}
+
+
+	/**
+	 * This is used to return the page title for a given bit.ly link.
+	 *
+	 * @return	array
+	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT
+	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT
+	 */
+	public function info($shortURL = null, $hash = null)
+	{
+		// redefine
+		$shortURL = (string) $shortURL;
+		$hash = (string) $hash;
+
+		// validate
+		if($shortURL == '' && $hash == '') throw new BitlyException('shortURL or hash should contain a value');
+
+		// make the call
+		if($shortURL !== '') $parameters['shortUrl'] = $shortURL;
+		if($hash !== '') $parameters['hash'] = $hash;
+
+		// make the call
+		$response = $this->doCall('info', $parameters);
+
+		// validate
+		if(isset($response['data']['info'][0]))
+		{
+			// init var
+			$return = array();
+
+			$return['url'] = $response['data']['info'][0]['short_url'];
+			$return['hash'] = $response['data']['info'][0]['user_hash'];
+			$return['global_hash'] = $response['data']['info'][0]['global_hash'];
+			$return['created_by'] = $response['data']['info'][0]['created_by'];
+			$return['title'] = $response['data']['info'][0]['title'];
+
+			// return
+			return $return;
+		}
+
+		// fallback
+		return false;
+	}
+
+
+	/**
+	 * This is used to query for a bit.ly link based on a long URL. For example you would use /v3/lookup followed by /v3/clicks to find click data when you have a long URL to start with.
+	 *
+	 * @return	array
+	 * @param	string $url		A long URL to shorten, eg: http://betaworks.com
+	 */
+	public function lookup($url)
+	{
+		// redefine
+		$url = (string) $url;
+
+		// make the call
+		$parameters['url'] = $url;
+
+		// make the call
+		$response = $this->doCall('lookup', $parameters);
+
+		// validate
+		if(isset($response['data']['lookup'][0]))
+		{
+			// init var
+			$return = array();
+
+			$return['url'] = $response['data']['lookup'][0]['short_url'];
+			$return['long_url'] = $response['data']['lookup'][0]['url'];
+			$return['global_hash'] = $response['data']['lookup'][0]['global_hash'];
+
+			// return
+			return $return;
+		}
+
+		// fallback
+		return false;
+	}
+
+
+	/**
+	 * Provides a list of referring sites for a specified bit.ly short link, and the number of clicks per referrer.
+	 *
+	 * @return	array
+	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT
+	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT
+	 */
+	public function referrers($shortURL = null, $hash = null)
+	{
+		// redefine
+		$shortURL = (string) $shortURL;
+		$hash = (string) $hash;
+
+		// validate
+		if($shortURL == '' && $hash == '') throw new BitlyException('shortURL or hash should contain a value');
+
+		// make the call
+		if($shortURL !== '') $parameters['shortUrl'] = $shortURL;
+		if($hash !== '') $parameters['hash'] = $hash;
+
+		// make the call
+		$response = $this->doCall('referrers', $parameters);
+
+		// validate
+		if(isset($response['data']['referrers']))
+		{
+			// init var
+			$return = array();
+
+			$return['url'] = $response['data']['short_url'];
+			$return['hash'] = $response['data']['user_hash'];
+			$return['global_hash'] = $response['data']['global_hash'];
+			$return['created_by'] = $response['data']['created_by'];
+			$return['referrers'] = $response['data']['referrers'];
 
 			// return
 			return $return;
@@ -433,6 +653,31 @@ class Bitly
 
 // user methods
 	/**
+	 * This is used to query whether a given short domain is assigned for bitly.Pro, and is consequently a valid shortUrl parameter for other api calls.
+	 *
+	 * @return	bool
+	 * @param	string $domain	A short domain.
+	 */
+	public function isProDomain($domain)
+	{
+		// redefine
+		$parameters['domain'] = (string) $domain;
+
+		// make the call
+		$response = $this->doCall('bitly_pro_domain', $parameters);
+
+		// validate
+		if(isset($response['data']['bitly_pro_domain']))
+		{
+			return ($response['data']['bitly_pro_domain'] == 1);
+		}
+
+		// fallback
+		return false;
+	}
+
+
+	/**
 	 * For any given a bit.ly user login and apiKey, you can validate that the pair is active.
 	 *
 	 * @return	bool
@@ -452,31 +697,6 @@ class Bitly
 		if(isset($response['data']['valid']))
 		{
 			return ($response['data']['valid'] == 1);
-		}
-
-		// fallback
-		return false;
-	}
-
-
-	/**
-	 * This is used to query whether a given short domain is assigned for bitly.Pro, and is consequently a valid shortUrl parameter for other api calls.
-	 *
-	 * @return	bool
-	 * @param	string $domain	A short domain.
-	 */
-	public function isProDomain($domain)
-	{
-		// redefine
-		$parameters['domain'] = (string) $domain;
-
-		// make the call
-		$response = $this->doCall('bitly_pro_domain', $parameters);
-
-		// validate
-		if(isset($response['data']['bitly_pro_domain']))
-		{
-			return ($response['data']['bitly_pro_domain'] == 1);
 		}
 
 		// fallback
