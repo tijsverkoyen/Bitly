@@ -7,6 +7,9 @@
  * The class is documented in the file itself. If you find any bugs help me out and report them. Reporting can be done by sending an email to php-bitly-bugs[at]verkoyen[dot]eu.
  * If you report a bug, make sure you give me enough information (include your code).
  *
+ * Changelog since 1.0.1
+ * - each URL will be added into your history, removed the history parameter
+ *
  * Changelog since 1.0.0
  * - corrected some documentation
  * - wrote some explanation for the method-parameters
@@ -43,7 +46,7 @@ class Bitly
 	const API_VERSION = '2.0.1';
 
 	// current version
-	const VERSION = '1.0.1';
+	const VERSION = '1.0.2';
 
 
 	/**
@@ -236,7 +239,7 @@ class Bitly
 
 	/**
 	 * Get the useragent that will be used. Our version will be prepended to yours.
-	 * It will look like: "PHP Akismet/<version> <your-user-agent>"
+	 * It will look like: "PHP Bitly/<version> <your-user-agent>"
 	 *
 	 * @return	string
 	 */
@@ -285,7 +288,7 @@ class Bitly
 
 	/**
 	 * Set the user-agent for you application
-	 * It will be appended to ours, the result will look like: "PHP Akismet/<version> <your-user-agent>"
+	 * It will be appended to ours, the result will look like: "PHP Bitly/<version> <your-user-agent>"
 	 *
 	 * @return	void
 	 * @param	string $userAgent	Your user-agent, it should look like <app-name>/<app-version>
@@ -370,13 +373,11 @@ class Bitly
 	 *
 	 * @return	string
 	 * @param	string $url	    A long URL to shorten, eg: http://betaworks.com
-	 * @param	bool[optional] $publishToHistory	Should this url be published into your history? Default is true
 	 */
-	public function shorten($url, $publishToHistory = true)
+	public function shorten($url)
 	{
 		// redefine
 		$parameters['longUrl'] = (string) $url;
-		if((bool) $publishToHistory) $parameters['history'] = 1;
 
 		// make the call
 		$response = $this->doCall('shorten', $parameters);
