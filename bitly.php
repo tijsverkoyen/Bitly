@@ -109,8 +109,8 @@ class Bitly
 	 * Default constructor
 	 *
 	 * @return	void
-	 * @param	string $login	The login (username) that has to be used for authenticating
-	 * @param	string $apiKey	The API-key that has to be used for authentication (see http://bit.ly/account)
+	 * @param	string $login	The login (username) that has to be used for authenticating.
+	 * @param	string $apiKey	The API-key that has to be used for authentication (see http://bit.ly/account).
 	 */
 	public function __construct($login, $apiKey)
 	{
@@ -123,8 +123,8 @@ class Bitly
 	 * Make the call
 	 *
 	 * @return	string
-	 * @param	string $url
-	 * @param	array[optional] $aParameters
+	 * @param	string $url						The url to call.
+	 * @param	array[optional] $aParameters	The parameters to pass.
 	 */
 	private function doCall($url, $aParameters = array())
 	{
@@ -141,16 +141,16 @@ class Bitly
 		$queryString = '';
 
 		// loop parameters and add them to the queryString
-		foreach($aParameters as $key => $value) $queryString .= '&'. $key .'='. urlencode(utf8_encode($value));
+		foreach($aParameters as $key => $value) $queryString .= '&' . $key . '=' . urlencode(utf8_encode($value));
 
 		// cleanup querystring
 		$queryString = trim($queryString, '&');
 
 		// append to url
-		$url .= '?'. $queryString;
+		$url .= '?' . $queryString;
 
 		// prepend
-		$url = self::API_URL .'/'. $url;
+		$url = self::API_URL . '/' . $url;
 
 		// set options
 		$options[CURLOPT_URL] = $url;
@@ -200,7 +200,7 @@ class Bitly
 			}
 
 			// throw error
-			throw new BitlyException('Invalid headers ('. $headers['http_code'] .')', (int) $headers['http_code']);
+			throw new BitlyException('Invalid headers (' . $headers['http_code'] . ')', (int) $headers['http_code']);
 		}
 
 		// error?
@@ -268,7 +268,7 @@ class Bitly
 	 */
 	public function getUserAgent()
 	{
-		return (string) 'PHP Bitly/'. self::VERSION .' '. $this->userAgent;
+		return (string) 'PHP Bitly/' . self::VERSION . ' ' . $this->userAgent;
 	}
 
 
@@ -276,7 +276,7 @@ class Bitly
 	 * Set the API-key that has to be used
 	 *
 	 * @return	void
-	 * @param	string $apiKey
+	 * @param	string $apiKey		The key to set.
 	 */
 	private function setApiKey($apiKey)
 	{
@@ -288,7 +288,7 @@ class Bitly
 	 * Set the login that has to be used
 	 *
 	 * @return	void
-	 * @param	string $login
+	 * @param	string $login	The login to use.
 	 */
 	private function setLogin($login)
 	{
@@ -301,7 +301,7 @@ class Bitly
 	 * After this time the request will stop. You should handle any errors triggered by this.
 	 *
 	 * @return	void
-	 * @param	int $seconds	The timeout in seconds
+	 * @param	int $seconds	The timeout in seconds.
 	 */
 	public function setTimeOut($seconds)
 	{
@@ -314,7 +314,7 @@ class Bitly
 	 * It will be appended to ours, the result will look like: "PHP Bitly/<version> <your-user-agent>"
 	 *
 	 * @return	void
-	 * @param	string $userAgent	Your user-agent, it should look like <app-name>/<app-version>
+	 * @param	string $userAgent	Your user-agent, it should look like <app-name>/<app-version>.
 	 */
 	public function setUserAgent($userAgent)
 	{
@@ -322,14 +322,13 @@ class Bitly
 	}
 
 
-
 // url methods
 	/**
 	 * Given a bit.ly URL or hash, expand decodes it and returns back the target URL.
 	 *
 	 * @return	array
-	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT
-	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT
+	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT.
+	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT.
 	 */
 	public function expand($shortURL = null, $hash = null)
 	{
@@ -371,8 +370,8 @@ class Bitly
 	 * This is used to return the page title for a given bit.ly link.
 	 *
 	 * @return	array
-	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT
-	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT
+	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT.
+	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT.
 	 */
 	public function info($shortURL = null, $hash = null)
 	{
@@ -415,7 +414,7 @@ class Bitly
 	 * This is used to query for a bit.ly link based on a long URL. For example you would use /v3/lookup followed by /v3/clicks to find click data when you have a long URL to start with.
 	 *
 	 * @return	array
-	 * @param	string $url		A long URL to shorten, eg: http://betaworks.com
+	 * @param	string $url		A long URL to shorten, eg: http://betaworks.com.
 	 */
 	public function lookup($url)
 	{
@@ -451,7 +450,7 @@ class Bitly
 	 * For a long URL, shorten encodes a URL and returns a short one.
 	 *
 	 * @return	array
-	 * @param	string $url	    					A long URL to shorten, eg: http://betaworks.com
+	 * @param	string $url	    					A long URL to shorten, eg: http://betaworks.com.
 	 * @param	string[optional] $domain			Refers to a preferred domain, possible values are: bit.ly or j.mp.
 	 * @param	string[optional] $endUserLogin		The end users login.
 	 * @param	string[optional] $endUserApiKey		The end users apiKey.
@@ -494,8 +493,8 @@ class Bitly
 	 * Grab the statistics about a link
 	 *
 	 * @return	array
-	 * @param	string[optional] $shortURL	refers to a bit.ly URL eg: http://bit.ly/1RmnUT
-	 * @param	string[optional] $hash		refers to a bit.ly hash eg: 1RmnUT
+	 * @param	string[optional] $shortURL	refers to a bit.ly URL eg: http://bit.ly/1RmnUT.
+	 * @param	string[optional] $hash		refers to a bit.ly hash eg: 1RmnUT.
 	 */
 	public function clicks($shortURL = null, $hash = null)
 	{
@@ -538,8 +537,8 @@ class Bitly
 	 * Given a bit.ly URL or hash, provides time series clicks per day for the last 30 days in reverse chronological order (most recent to least recent).
 	 *
 	 * @return	array
-	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT
-	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT
+	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT.
+	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT.
 	 */
 	public function clicksByDay($shortURL = null, $hash = null)
 	{
@@ -581,8 +580,8 @@ class Bitly
 	 * Given a bit.ly URL or hash, provides time series clicks per minute for the last hour in reverse chronological order (most recent to least recent).
 	 *
 	 * @return	array
-	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT
-	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT
+	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT.
+	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT.
 	 */
 	public function clicksByMinute($shortURL = null, $hash = null)
 	{
@@ -624,8 +623,8 @@ class Bitly
 	 * Provides a list of countries from which clicks on a specified bit.ly short link have originated, and the number of clicks per country.
 	 *
 	 * @return	array
-	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT
-	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT
+	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT.
+	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT.
 	 */
 	public function countries($shortURL = null, $hash = null)
 	{
@@ -667,8 +666,8 @@ class Bitly
 	 * Provides a list of referring sites for a specified bit.ly short link, and the number of clicks per referrer.
 	 *
 	 * @return	array
-	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT
-	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT
+	 * @param	string[optional] $shortURL	Refers to a bit.ly URL eg: http://bit.ly/1RmnUT.
+	 * @param	string[optional] $hash		Refers to a bit.ly hash eg: 1RmnUT.
 	 */
 	public function referrers($shortURL = null, $hash = null)
 	{
