@@ -141,7 +141,12 @@ class Bitly
 		$queryString = '';
 
 		// loop parameters and add them to the queryString
-		foreach($aParameters as $key => $value) $queryString .= '&' . $key . '=' . urlencode(utf8_encode($value));
+		foreach($aParameters as $key => $value)
+		{
+			if (!mb_check_encoding($value, 'UTF-8'))
+				$value = utf8_encode($value);
+			$queryString .= '&' . $key . '=' . urlencode($value);
+		}
 
 		// cleanup querystring
 		$queryString = trim($queryString, '&');
